@@ -60,15 +60,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install MCPB CLI
+        run: npm install -g @anthropic-ai/mcpb
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
+      - name: Prepare MCPB package
+        run: |
+          mkdir -p bin
+          cp artifacts/elysium-linux-x86_64/elysium-linux-x86_64 bin/
+          cp artifacts/elysium-macos-x86_64/elysium-macos-x86_64 bin/
+          cp artifacts/elysium-macos-aarch64/elysium-macos-aarch64 bin/
+          cp artifacts/elysium-windows-x86_64.exe/elysium-windows-x86_64.exe bin/
+          chmod +x bin/elysium-*
+          ls -la bin/
+
+      - name: Build MCPB package
+        run: |
+          mcpb pack . elysium.mcpb
+          ls -la elysium.mcpb
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: |
+            artifacts/**/*
+            elysium.mcpb
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,53 @@
+{
+  "manifest_version": "0.2",
+  "name": "elysium",
+  "version": "0.1.0",
+  "description": "MCP server for Obsidian-based Second Brain with AI-powered semantic search",
+  "author": {
+    "name": "junejae",
+    "url": "https://github.com/junejae"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/junejae/elysium-mcp"
+  },
+  "server": {
+    "type": "binary",
+    "platforms": {
+      "darwin-arm64": {
+        "entry_point": "bin/elysium-macos-aarch64",
+        "mcp_config": {
+          "command": "${__dirname}/bin/elysium-macos-aarch64",
+          "args": ["mcp"],
+          "env": {}
+        }
+      },
+      "darwin-x64": {
+        "entry_point": "bin/elysium-macos-x86_64",
+        "mcp_config": {
+          "command": "${__dirname}/bin/elysium-macos-x86_64",
+          "args": ["mcp"],
+          "env": {}
+        }
+      },
+      "linux-x64": {
+        "entry_point": "bin/elysium-linux-x86_64",
+        "mcp_config": {
+          "command": "${__dirname}/bin/elysium-linux-x86_64",
+          "args": ["mcp"],
+          "env": {}
+        }
+      },
+      "win32-x64": {
+        "entry_point": "bin/elysium-windows-x86_64.exe",
+        "mcp_config": {
+          "command": "${__dirname}/bin/elysium-windows-x86_64.exe",
+          "args": ["mcp"],
+          "env": {}
+        }
+      }
+    }
+  },
+  "license": "MIT",
+  "keywords": ["mcp", "obsidian", "second-brain", "semantic-search", "ai"]
+}
