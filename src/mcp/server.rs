@@ -168,7 +168,9 @@ impl VaultService {
         params: Parameters<SearchParams>,
     ) -> Result<CallToolResult, McpError> {
         let mut engine = self.get_engine()?;
-        let limit = if params.0.limit == 0 { 5 } else { params.0.limit };
+        // Clamp limit: default 5, max 100 (DoS prevention)
+        let limit = params.0.limit.max(1).min(100);
+        let limit = if limit == 1 && params.0.limit == 0 { 5 } else { limit };
 
         let results = engine.search(&params.0.query, limit).map_err(|e| {
             McpError::internal_error(format!("Search failed: {}", e), None)
@@ -252,7 +254,9 @@ impl VaultService {
         let notes = collect_all_notes(&vault_paths);
         let note_type = &params.0.note_type;
         let area = &params.0.area;
-        let limit = if params.0.limit == 0 { 50 } else { params.0.limit };
+        // Clamp limit: default 50, max 500 (DoS prevention)
+        let limit = params.0.limit.max(1).min(500);
+        let limit = if limit == 1 && params.0.limit == 0 { 50 } else { limit };
 
         let filtered: Vec<NoteInfoJson> = notes
             .into_iter()
