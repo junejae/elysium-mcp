@@ -16,15 +16,19 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact: elysium-linux-x86_64
+            mcpb_platform: linux-x64
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact: elysium-macos-x86_64
+            mcpb_platform: darwin-x64
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact: elysium-macos-aarch64
+            mcpb_platform: darwin-arm64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact: elysium-windows-x86_64.exe
+            mcpb_platform: win32-x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -52,11 +56,24 @@ jobs:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
 
-  release:
+  mcpb:
     needs: build
+    strategy:
+      matrix:
+        include:
+          - platform: darwin-arm64
+            artifact: elysium-macos-aarch64
+            binary: elysium-macos-aarch64
+          - platform: darwin-x64
+            artifact: elysium-macos-x86_64
+            binary: elysium-macos-x86_64
+          - platform: linux-x64
+            artifact: elysium-linux-x86_64
+            binary: elysium-linux-x86_64
+          - platform: win32-x64
+            artifact: elysium-windows-x86_64.exe
+            binary: elysium-windows-x86_64.exe
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -68,32 +85,77 @@ jobs:
       - name: Install MCPB CLI
         run: npm install -g @anthropic-ai/mcpb
 
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: bin/
+
+      - name: Make binary executable
+        run: chmod +x bin/${{ matrix.binary }} || true
+
+      - name: Create platform manifest
+        run: |
+          cat > manifest.json << 'EOF'
+          {
+            "manifest_version": "0.2",
+            "name": "elysium",
+            "version": "${{ github.ref_name }}",
+            "description": "MCP server for Obsidian-based Second Brain with AI-powered semantic search",
+            "author": {
+              "name": "junejae",
+              "url": "https://github.com/junejae"
+            },
+            "repository": {
+              "type": "git",
+              "url": "https://github.com/junejae/elysium-mcp"
+            },
+            "server": {
+              "type": "binary",
+              "entry_point": "bin/${{ matrix.binary }}",
+              "mcp_config": {
+                "command": "${__dirname}/bin/${{ matrix.binary }}",
+                "args": ["mcp"],
+                "env": {}
+              }
+            },
+            "license": "MIT",
+            "keywords": ["mcp", "obsidian", "second-brain", "semantic-search", "ai"]
+          }
+          EOF
+          cat manifest.json
+
+      - name: Build MCPB package
+        run: |
+          mcpb pack . elysium-${{ matrix.platform }}.mcpb
+          ls -la *.mcpb
+
+      - name: Upload MCPB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: elysium-${{ matrix.platform }}.mcpb
+          path: elysium-${{ matrix.platform }}.mcpb
+
+  release:
+    needs: [build, mcpb]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Prepare MCPB package
-        run: |
-          mkdir -p bin
-          cp artifacts/elysium-linux-x86_64/elysium-linux-x86_64 bin/
-          cp artifacts/elysium-macos-x86_64/elysium-macos-x86_64 bin/
-          cp artifacts/elysium-macos-aarch64/elysium-macos-aarch64 bin/
-          cp artifacts/elysium-windows-x86_64.exe/elysium-windows-x86_64.exe bin/
-          chmod +x bin/elysium-*
-          ls -la bin/
-
-      - name: Build MCPB package
-        run: |
-          mcpb pack . elysium.mcpb
-          ls -la elysium.mcpb
+      - name: List artifacts
+        run: find artifacts -type f
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/**/*
-            elysium.mcpb
+          files: artifacts/**/*
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

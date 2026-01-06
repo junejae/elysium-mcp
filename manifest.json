@@ -13,39 +13,11 @@
   },
   "server": {
     "type": "binary",
-    "platforms": {
-      "darwin-arm64": {
-        "entry_point": "bin/elysium-macos-aarch64",
-        "mcp_config": {
-          "command": "${__dirname}/bin/elysium-macos-aarch64",
-          "args": ["mcp"],
-          "env": {}
-        }
-      },
-      "darwin-x64": {
-        "entry_point": "bin/elysium-macos-x86_64",
-        "mcp_config": {
-          "command": "${__dirname}/bin/elysium-macos-x86_64",
-          "args": ["mcp"],
-          "env": {}
-        }
-      },
-      "linux-x64": {
-        "entry_point": "bin/elysium-linux-x86_64",
-        "mcp_config": {
-          "command": "${__dirname}/bin/elysium-linux-x86_64",
-          "args": ["mcp"],
-          "env": {}
-        }
-      },
-      "win32-x64": {
-        "entry_point": "bin/elysium-windows-x86_64.exe",
-        "mcp_config": {
-          "command": "${__dirname}/bin/elysium-windows-x86_64.exe",
-          "args": ["mcp"],
-          "env": {}
-        }
-      }
+    "entry_point": "bin/elysium",
+    "mcp_config": {
+      "command": "${__dirname}/bin/elysium",
+      "args": ["mcp"],
+      "env": {}
     }
   },
   "license": "MIT",
